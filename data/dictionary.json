@@ -1,0 +1,46 @@
+{
+  "nay": [
+    {
+      "output": "နေ",
+      "score": 1.0
+    }
+  ],
+  "kaung": [
+    {
+      "output": "ကောင်း",
+      "score": 1.0
+    }
+  ],
+  "lar": [
+    {
+      "output": "လား",
+      "score": 1.0
+    }
+  ],
+  "mingalarpar": [
+    {
+      "output": "မင်္ဂလာပါ",
+      "score": 1.0
+    }
+  ],
+  "nay kaung lar": [
+    {
+      "output": "နေကောင်းလား",
+      "score": 1.0
+    }
+  ],
+  "ma": [
+    {
+      "output": "မ",
+      "score": 1.0
+    },
+    {
+      "output": "မှာ",
+      "score": 0.8
+    },
+    {
+      "output": "မာ",
+      "score": 0.6
+    }
+  ]
+}

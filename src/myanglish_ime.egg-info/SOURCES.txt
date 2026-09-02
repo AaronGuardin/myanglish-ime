@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+src/myanglish_ime/__init__.py
+src/myanglish_ime/models.py
+src/myanglish_ime/normalizer.py
+src/myanglish_ime/transliterator.py
+src/myanglish_ime.egg-info/PKG-INFO
+src/myanglish_ime.egg-info/SOURCES.txt
+src/myanglish_ime.egg-info/dependency_links.txt
+src/myanglish_ime.egg-info/top_level.txt
+tests/test_normalizer.py
