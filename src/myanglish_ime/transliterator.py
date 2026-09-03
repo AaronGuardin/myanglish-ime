@@ -1,3 +1,4 @@
+import re
 from myanglish_ime.dictionary import DictionaryRepository
 from myanglish_ime.fuzzy import FuzzyMatcher
 from myanglish_ime.models import Candidate
@@ -7,6 +8,14 @@ from myanglish_ime.variants import VariantGenerator
 
 class Transliterator:
     """Convert Myanglish input into Myanmar Unicode."""
+
+    @staticmethod
+    def _split_punctuation(text: str) -> tuple[str, str]:
+        """Separate trailing punctuation from transliteration input."""
+        match = re.match(r"^(.*?)([.!?,。！？]*)$", text)
+        if not match:
+            return text, ""
+        return match.group(1), match.group(2)
 
     def __init__(
         self,
@@ -22,94 +31,76 @@ class Transliterator:
 
     def candidates(self, text: str) -> list[Candidate]:
         """Return ranked transliteration candidates."""
+        clean_text, _ = self._split_punctuation(text)
+        normalized_text = self.normalizer.normalize(clean_text)
 
-        normalized_text = self.normalizer.normalize(text)
+        if not normalized_text:
+            return []
 
+        seen_outputs: set[str] = set()
         all_candidates: list[Candidate] = []
 
         # 1. Exact lookup using generated variants.
         for variant in self.variant_generator.generate(normalized_text):
-            candidates = self.dictionary.lookup(variant)
-            all_candidates.extend(candidates)
+            dict_candidates = self.dictionary.lookup(variant)
+            for cand in dict_candidates:
+                if cand.output_text not in seen_outputs:
+                    seen_outputs.add(cand.output_text)
+                    all_candidates.append(cand)
 
-        # If exact candidates exist, prefer them.
         if all_candidates:
-            return sorted(
-                all_candidates,
-                key=lambda candidate: candidate.score,
-                reverse=True,
-            )
+            return sorted(all_candidates, key=lambda c: c.score, reverse=True)
 
         # 2. Fuzzy matching fallback.
-        fuzzy_matches = self.fuzzy_matcher.find_matches(
-            normalized_text
-        )
+        fuzzy_matches = self.fuzzy_matcher.find_matches(normalized_text)
+        input_word_count = len(normalized_text.split())
 
         for matched_word, similarity_score in fuzzy_matches:
-            matched_candidates = self.dictionary.lookup(
-                matched_word
-            )
+            if len(matched_word.split()) != input_word_count:
+                continue
 
+            matched_candidates = self.dictionary.lookup(matched_word)
             for candidate in matched_candidates:
-                all_candidates.append(
-                    Candidate(
-                        input_text=normalized_text,
-                        output_text=candidate.output_text,
-                        score=candidate.score * similarity_score,
-                        source="fuzzy",
-                    )
-                )
+                if candidate.output_text not in seen_outputs:
+                    seen_outputs.add(candidate.output_text)
 
-        return sorted(
-            all_candidates,
-            key=lambda candidate: candidate.score,
-            reverse=True,
-        )
+                    all_candidates.append(
+                        Candidate(
+                            input_text=normalized_text,
+                            output_text=candidate.output_text,
+                            score=candidate.score * similarity_score,
+                            source="fuzzy",
+                        )
+                    )
+
+        return sorted(all_candidates, key=lambda c: c.score, reverse=True)
 
     def transliterate(self, text: str) -> str | None:
         """Return the highest-ranked transliteration result."""
+        if not text:
+            return None
 
-        normalized_text = self.normalizer.normalize(text)
+        clean_text, punctuation = self._split_punctuation(text)
+        normalized_text = self.normalizer.normalize(clean_text)
 
-        words = normalized_text.split()
+        if not normalized_text:
+            return None
 
-        # Word-by-word exact match check condition
-        if len(words) > 1:
-            exact_words: list[str] = []
-            for word in words:
-                word_candidates: list[Candidate] = []
-                for variant in self.variant_generator.generate(word):
-                    word_candidates.extend(self.dictionary.lookup(variant))
-                
-                if word_candidates:
-                    best_candidate = sorted(
-                        word_candidates,
-                        key=lambda candidate: candidate.score,
-                        reverse=True,
-                    )[0]
-                    exact_words.append(best_candidate.output_text)
-                else:
-                    break
-
-            if len(exact_words) == len(words):
-                return "".join(exact_words)
-
+        # 1. Full phrase translation
         candidates = self.candidates(normalized_text)
-
         if candidates:
-            return candidates[0].output_text
+            return candidates[0].output_text + punctuation
 
+        # 2. Word-by-word fallback
+        words = normalized_text.split()
         if len(words) <= 1:
             return None
 
         output_words: list[str] = []
-
         for word in words:
             word_candidates = self.candidates(word)
-
             if not word_candidates:
                 return None
-
             output_words.append(word_candidates[0].output_text)
 
-        return "".join(output_words)
+        return "".join(output_words) + punctuation

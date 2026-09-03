@@ -1,4 +1,10 @@
 {
+  "mingalarpar": [
+    {
+      "output": "မင်္ဂလာပါ",
+      "score": 1.0
+    }
+  ],
   "nay": [
     {
       "output": "နေ",
@@ -14,12 +20,6 @@
   "lar": [
     {
       "output": "လား",
-      "score": 1.0
-    }
-  ],
-  "mingalarpar": [
-    {
-      "output": "မင်္ဂလာပါ",
       "score": 1.0
     }
   ],
@@ -41,6 +41,30 @@
     {
       "output": "မာ",
       "score": 0.6
+    }
+  ],
+  "shi": [
+    {
+      "output": "ရှိ",
+      "score": 1.0
+    }
+  ],
+  "buu": [
+    {
+      "output": "ဘူး",
+      "score": 1.0
+    }
+  ],
+  "ma shi buu": [
+    {
+      "output": "မရှိဘူး",
+      "score": 1.0
+    }
+  ],
+  "ma thwar buu": [
+    {
+      "output": "မသွားဘူး",
+      "score": 1.0
     }
   ]
 }
